@@ -1,80 +1,69 @@
-import axios from "axios";
-import { useState, useEffect } from "react";
-import { useParams } from "react-router";
+import React, { useEffect, useState } from "react";
 import CardModel from "../components/CardModel";
-export default function Home() {
-  //var params = useParams();
-  //var [home, setHome] = useState({});
-  const [title, settitle] = useState("");
-  const [homeList, setHomeList] = useState([]);
-  const [image, setimage] = useState("");
-  const [text, settext] = useState("");
+import UpdateHome from "./UpdateHome";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-  //THE USER CAN ADD A HOME
-  function addHome() {
-    if (!text || !image || !title) {
-      alert("Please fill all the fields");
-    } else {
-      axios
-        .post("http://localhost:3000/homes/post", {
-          title: title,
-          text: text,
-          image: image,
-        })
-        .then(({ data }) => {
-          setHomeList((prevHomeList) => [...prevHomeList, data]);
-          settitle("");
+import { Link } from "react-router-dom";
+import axios from "axios";
 
-          settext("");
+function HomePage() {
+  const [homes, setHomes] = useState([]);
+  const [isLoggedin, setIsLoggedin] = useState(false);
 
-          setimage("");
-        });
-    }
-  }
-  // THE USER CAN UPDATE(PUT) A HOME
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/homes/")
+      .then((data) => setHomes(data.data))
+      .catch((err) => console.log(err));
+  }, []);
 
-  //THE USER CAN DELETE A HOME
+  const handleDelete = (id) => {
+    axios
+      .delete("http://localhost:3000/homes/deleteHome/" + id)
+      .then((data) => {
+        console.log(data);
+        window.location.reload();
+        window.alert("Successfully deleted the item.");
+      })
+      .catch((err) => console.log(err));
+  };
+  const logout = () => {
+    localStorage.clear();
+    setIsLoggedin(false);
+  };
 
-  //THE USER CAN GET ALL THE HOMES
   return (
-    <div className="HomePage">
-      <div className="pagename">
-        <h1>Home Sweet Home</h1>
-      </div>
-      <div className="HomeContainer">
-        <input
-          onChange={(e) => {
-            settitle(e.target.value);
-          }}
-          value={title}
-          placeholder="Title"
-        />
-        <input
-          onChange={(e) => {
-            setimage(e.target.value);
-          }}
-          value={image}
-          placeholder="Image URL"
-        />
-        <input
-          onChange={(e) => {
-            settext(e.target.value);
-          }}
-          value={text}
-          placeholder="Text"
-        />
-        <button onClick={addHome}>Add a home</button>
-        <div className="home-cards">
-          {homeList.map((card, index) => (
-            <CardModel
-              key={index}
-              title={card.title}
-              imageSrc={card.imageSrc}
-              text={card.text}
-            />
-          ))}
-        </div>
+    <div className="d-flex vh-100 bg-primary justify-content-center align-items-center">
+      <div className="w-50 bg-white rounded p-3">
+        <table className="table">
+          <Link to="/create" className="btn btn-success">
+            Add +
+          </Link>
+          <thead>
+            <tr>
+              <th>Publish a house</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              <div className="home-cards">
+                {homes.map((home, index) => (
+                  <CardModel
+                    key={index}
+                    title={home.title}
+                    image={home.image}
+                    text={home.text}
+                    onDelete={() => handleDelete(home._id)}
+                    onUpdate={() => UpdateHome(home._id)}
+                  />
+                ))}
+              </div>
+            }
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
+
+export default HomePage;
